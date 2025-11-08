@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-import profile_cutter
+from profile_cutter import Cutter
 
 app = Flask(__name__)
 
@@ -10,40 +10,26 @@ def index():
 @app.route("/process", methods=['POST'])
 def process():
     user_input = request.form
-    print(user_input)
+    print(f"input: {user_input}")
 
     error_message = _validate_input(user_input)
     if error_message:
         return jsonify({'result': error_message})
 
-    stock, demand = _to_dictionaries(user_input)
-    print(f"stock: {stock}")
-    print(f"demand: {demand}")
-
-    cutter = profile_cutter.Cutter(stock, demand)
+    cutter = Cutter(user_input)
+    print(f"stock: {cutter._stock}")
+    print(f"demand: {cutter._demand}")
+    
     result = cutter.calculate()
-    print(result)
+    print(f"result: {result}")
     
     return jsonify({'result': result})
 
 def _validate_input(user_input):
     for key, value in user_input.items():
-        if len(key) == 0 or len(value) == 0:
+        if len(value) == 0:
             return "Заполните все поля!"
     return None
-
-def _to_dictionaries(user_input):
-    stock, demand = dict(), dict()
-    for key, value in user_input.items():
-        if key.startswith("qty"):
-            length_key = "len" + key[-1]
-            corresponding_length = float(user_input[length_key])
-            stock[corresponding_length] = int(value)
-        elif key == "demand_qty":
-            length_key = "demand_len"
-            corresponding_length = float(user_input[length_key])
-            demand[corresponding_length] = int(value)
-    return stock, demand
 
 if __name__ == '__main__':
     app.run()

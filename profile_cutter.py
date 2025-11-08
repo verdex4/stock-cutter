@@ -3,10 +3,23 @@ from itertools import product
 import numpy as np
 
 class Cutter:
-    def __init__(self, stock: dict, demand: dict):
-        self._stock = stock
-        self._demand = demand
+    def __init__(self, user_input):
+        self._stock, self._demand = self._to_dictionaries(user_input)
         self._priority = self._priority_stock()
+
+    def _to_dictionaries(self, user_input):
+        """Преобразует входные данные в словари вида 'длина: количество'"""
+        stock, demand = dict(), dict()
+        for key, value in user_input.items():
+            if key.startswith("qty") and int(value) != 0:
+                length_key = "len" + key[-1]
+                corresponding_length = float(user_input[length_key])
+                stock[corresponding_length] = int(value)
+            elif key == "demand_qty":
+                length_key = "demand_len"
+                corresponding_length = float(user_input[length_key])
+                demand[corresponding_length] = int(value)
+        return stock, demand
     
     def _priority_stock(self):
         """Находит те длины профиля на складе, которые нацело делятся на длину заказанного профиля"""
@@ -22,7 +35,10 @@ class Cutter:
         """Находит решение и выводит ответ в понятном формате"""
         errors = self._validate_data()
         if errors:
-            return self._error_handle(errors)
+            message = ""
+            for err in errors:
+                message += err + '\n'
+            return message
         answer = self._process()   
         return self._format_output(answer)
 
@@ -32,6 +48,8 @@ class Cutter:
             if qty < 0:
                 errors.append(f"Отрицательное количество профиля длины {l}: {qty}")
         for l, qty in self._demand.items():
+            if qty == 0:
+                errors.append(f"Количество заказанного профиля должно быть больше 0")
             if qty < 0:
                 errors.append(f"Отрицательное количество заказанного профиля: {qty}")
         
@@ -44,12 +62,6 @@ class Cutter:
             errors.append(
                 f"Недостаточно профиля на складе! Есть {total_stock} метров, надо {total_demand}")
         return errors if errors else None
-    
-    def _error_handle(self, errors):
-        message = ""
-        for err in errors:
-            message += err + '\n'
-        return message
     
     def _process(self):
         """Находит решение"""
