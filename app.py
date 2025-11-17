@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from profile_cutter import Cutter
+from algorithm import Solver
 
 app = Flask(__name__)
 
@@ -16,11 +16,9 @@ def process():
     if error_message:
         return jsonify({'result': error_message})
 
-    cutter = Cutter(user_input)
-    print(f"stock: {cutter._stock}")
-    print(f"demand: {cutter._demand}")
+    solver = Solver(user_input)
     
-    result = cutter.calculate()
+    result = solver.solve()
     print(f"result: {result}")
     
     return jsonify({'result': result})
