@@ -46,20 +46,26 @@ class Solver:
         new_stock_lengths = []
         new_stock_quantities = []
         for l, qty in zip(self._stock_lengths, self._stock_quantities):
-            if qty < 0:
+            if l < 0 or qty < 0:
                 message = "Не должно быть отрицательных чисел"
                 return message
+            # нули принимаются как за несуществующую заготовку
             elif qty > 0:
                 new_stock_lengths.append(l)
                 new_stock_quantities.append(qty)
+        
+        if len(new_stock_lengths) == 0:
+            message = "На складе пусто. Введите хотя бы одно количество, большее нуля"
+            return message
+        
         self._stock_lengths = new_stock_lengths
         self._stock_quantities = new_stock_quantities
             
-        if self._demand_length == 0:
+        if self._demand_length < 0 or self._demand_quantity < 0:
             message = "Не должно быть отрицательных чисел"
             return message
-        if self._demand_quantity == 0:
-            message = "Заказ пустой"
+        if self._demand_length == 0 or self._demand_quantity == 0:
+            message = "Заказ пуст. Введите количество больше нуля"
             return message
         return message
     
@@ -139,7 +145,7 @@ class Solver:
 
         # ПОЛУЧЕНИЕ РЕЗУЛЬТАТОВ
         min_waste = lp.value(problem.objective)
-        if lp.LpStatus[problem.status] == "Optimal":
+        if status == lp.LpStatusOptimal:
             print(f"Problem is solved!")
             print(f"Minimal waste: {min_waste}")
             for i in range(len(x)):
@@ -247,7 +253,7 @@ class Solver:
                 output += f"Заготовка {l} м:\n"
             for j in range(len(x[i])):
                 combination_qty = int(lp.value(x[i][j])) # Количество используемой комбинации
-                print(f"x{i}{j} = {combination_qty}; заготовка: {self._stock_lengths[i]}")
+                print(f"x{i}{j} = {combination_qty}; piece: {self._stock_lengths[i]}")
                 if combination_qty > 0:
                     # Количество заказанных профилей в комбинации
                     realised_profiles = self._patterns[i][j].pieces_count
