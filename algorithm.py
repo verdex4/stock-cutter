@@ -256,13 +256,8 @@ class Solver:
                 print(f"x{i}{j} = {combination_qty}; piece: {self._stock_lengths[i]}")
                 if combination_qty > 0:
                     # Количество заказанных профилей в комбинации
-                    realised_profiles = self._patterns[i][j].pieces_count
-                    combination = '['
-                    for k in range(realised_profiles):
-                        if k < realised_profiles - 1:
-                            combination += f"{self._demand_length}, "
-                            continue
-                        combination += f"{self._demand_length}]"
+                    pieces_count = self._patterns[i][j].pieces_count
+                    combination = f"[{self._demand_length} x {pieces_count}]"
                     cur_waste = self._patterns[i][j].waste
                     cur_waste = self._clean_float(cur_waste) # Преобразуем в читаемый формат
                     output += f"План раскроя: {combination} | Обрезок: {cur_waste} м\n"
