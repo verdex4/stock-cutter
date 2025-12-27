@@ -20,7 +20,7 @@ class Solver:
         print(f"cutting patterns: {self._patterns}")
         min_waste = self._find_min_waste()
         if min_waste == -1:
-            return "Раскрой невозможен, недостаточно профиля на складе"
+            return "Раскрой невозможен, недостаточно заготовок на складе"
         result = self._find_uniform_solution(min_waste)
         return result
 
@@ -71,17 +71,17 @@ class Solver:
     
     def _make_cutting_patterns(self):
         Pattern = namedtuple("Pattern", ['pieces_count', 'waste'])
-        patterns = []
+        all_patterns = []
         for i in range(len(self._stock_lengths)):
-            profile_patterns = []
+            item_patterns = []
             pieces_count = 1
             waste = self._stock_lengths[i] - self._demand_length
             while waste >= 0:
-                profile_patterns.append(Pattern(pieces_count, waste))
+                item_patterns.append(Pattern(pieces_count, waste))
                 pieces_count += 1
                 waste -= self._demand_length
-            patterns.append(profile_patterns)
-        return patterns
+            all_patterns.append(item_patterns)
+        return all_patterns
 
     def _find_min_waste(self):
         """
@@ -92,23 +92,27 @@ class Solver:
 
         Целевая функция: сумма полученных остатков.
 
-        Ограничения:
-            1. Количество полученных профилей для разреза должно быть целым, 
-            больше или равно 0.
-            2. Мы не можем использовать больше профилей, чем на складе.
-            3. Полученное количество отрезков должно быть равно заказанному количеству.
-        
         Используемые переменные:
-            1. self._patterns - варианты раскроя для каждого профиля, 
+            1. self._patterns - варианты раскроя для каждой заготовки, 
             где элемент self._patterns[i][j] - одна комбинация, кортеж вида 
             (количество_полученных_отрезков, остаток).
             Размерность 2.
-            Количество строк - количество профилей.
-            Количество столбцов - не фиксировано, зависит от профиля.
+            Количество строк - количество заготовок.
+            Количество столбцов - не фиксировано, зависит от заготовки.
             2. x - таблица с целыми числами, 
             где x[i][j] - количество комбинации self._patterns[i][j] в решении
             Размер совпадает с self._patterns
+            3. item - заготовка на складе
+            4. piece - полученная заготовка в результате разреза
+            5. waste - отходы
+
+        Ограничения:
+            1. Количество комбинаций x[i][j] >= 0, целое.
+            2. Мы не можем использовать больше заготовок, чем на складе.
+            3. Полученное количество отрезков должно быть равно заказанному количеству.
         """
+        problem = lp.LpProblem("Waste_minimization", lp.LpMinimize)
+
         x = [[] for i in range(len(self._patterns))]
         for i in range(len(self._patterns)):
             for j in range(len(self._patterns[i])):
@@ -117,8 +121,6 @@ class Solver:
                     lowBound=0,
                     upBound=self._stock_quantities[i],
                     cat=lp.LpInteger)) # ПЕРВОЕ ОГРАНИЧЕНИЕ
-                
-        problem = lp.LpProblem("Waste_minimization", lp.LpMinimize)
 
         # ЦЕЛЕВАЯ ФУНКЦИЯ
         total_waste = 0
@@ -130,8 +132,8 @@ class Solver:
 
         # ВТОРОЕ ОГРАНИЧЕНИЕ
         for i in range(len(x)):
-            used_profiles = lp.lpSum(x[i])
-            problem += used_profiles <= self._stock_quantities[i]
+            used_items = lp.lpSum(x[i])
+            problem += used_items <= self._stock_quantities[i]
 
         # ТРЕТЬЕ ОГРАНИЧЕНИЕ
         total_pieces = 0
@@ -163,25 +165,29 @@ class Solver:
         Решает ту же задачу, но с условием остатка, равному минимальному (min_waste).
 
         Задача: минимизировать функцию разброса.
+        
         Целевая функция: средняя дистанция между всеми элементами
-        Ограничения:
-            1. Количество полученных профилей для разреза должно быть целым, 
-            больше или равно 0.
-            2. Мы не можем использовать больше профилей, чем на складе.
-            3. Полученное количество отрезков должно быть равно заказанному количеству.
-            4. Полученный остаток должен быть равен минимальному.
         
         Используемые переменные:
-            1. self._patterns - варианты раскроя для каждого профиля, 
+            1. self._patterns - варианты раскроя для каждой заготовки, 
             где элемент self._patterns[i][j] - одна комбинация, кортеж вида 
             (количество_полученных_отрезков, остаток).
             Размерность 2.
-            Количество строк - количество профилей.
-            Количество столбцов - не фиксировано, зависит от профиля.
+            Количество строк - количество заготовок.
+            Количество столбцов - не фиксировано, зависит от заготовки.
             2. x - таблица с целыми числами, 
             где x[i][j] - количество комбинации self._patterns[i][j] в решении
             Размер совпадает с self._patterns
-            3. distances - список дистанций между всеми возможными парами профилей.
+            3. item - заготовка на складе
+            4. piece - полученная заготовка в результате разреза
+            5. waste - отходы
+            6. distances - список дистанций между всеми возможными парами заготовок.
+        
+        Ограничения:
+            1. Количество комбинаций x[i][j] >= 0, целое.
+            2. Мы не можем использовать больше заготовок, чем на складе.
+            3. Полученное количество отрезков должно быть равно заказанному количеству.
+            4. Полученный остаток должен быть равен минимальному.
         """
         problem = lp.LpProblem("Uniform_solution", lp.LpMinimize)
 
@@ -196,8 +202,8 @@ class Solver:
 
         # ВТОРОЕ ОГРАНИЧЕНИЕ
         for i in range(len(x)):
-            used_profiles = lp.lpSum(x[i])
-            problem += used_profiles <= self._stock_quantities[i]
+            used_items = lp.lpSum(x[i])
+            problem += used_items <= self._stock_quantities[i]
 
         # ТРЕТЬЕ ОГРАНИЧЕНИЕ
         total_pieces = 0
@@ -215,9 +221,9 @@ class Solver:
         problem += total_waste == min_waste
 
         # ЦЕЛЕВАЯ ФУНКЦИЯ
-        used_profiles = [lp.lpSum(x[i]) for i in range(len(x))]
-        # Находим все возможные пары использованных профилей (в индексах)
-        pairs = combinations(range(len(used_profiles)), 2)
+        used_items = [lp.lpSum(x[i]) for i in range(len(x))]
+        # Находим все возможные пары использованных заготовок (в индексах)
+        pairs = combinations(range(len(used_items)), 2)
         distances = []
         for i, j in pairs:
             d = lp.LpVariable(f"d{i}{j}")
@@ -225,10 +231,10 @@ class Solver:
             # Дистанция: |x1 - x2|, но модуль нелинейная функция
             # |x1 - x2| = max(x1 - x2, x2 - x1)
             # Т.к. мы минимизируем функцию, d = max(x1 - x2, x2 - x1)
-            problem += d >= used_profiles[i] - used_profiles[j]
-            problem += d >= used_profiles[j] - used_profiles[i]
+            problem += d >= used_items[i] - used_items[j]
+            problem += d >= used_items[j] - used_items[i]
 
-        avg_distance = lp.lpSum(distances) / len(used_profiles)
+        avg_distance = lp.lpSum(distances) / len(used_items)
         problem += avg_distance
 
         # РЕШЕНИЕ
@@ -238,7 +244,7 @@ class Solver:
         if status == lp.LpStatusOptimal:
             print(f"Problem is solved!")
             print(f"Waste: {min_waste}")
-            print(f"Used pieces: {used_profiles}")
+            print(f"Used pieces: {used_items}")
             print(f"Mean distance: {lp.value(problem.objective)}")
         elif lp.LpStatus[problem.status] == lp.LpStatusInfeasible:
             print(f"No solution found!")
@@ -248,14 +254,14 @@ class Solver:
         output = "СХЕМА РАСКРОЯ ЗАГОТОВОК:\n\n"
         for i in range(len(x)):
             l = self._stock_lengths[i]
-            cur_used = lp.value(used_profiles[i])
+            cur_used = lp.value(used_items[i])
             if isinstance(cur_used, (int, float)) and cur_used > 0:
                 output += f"Заготовка {l} м:\n"
             for j in range(len(x[i])):
                 combination_qty = int(lp.value(x[i][j])) # Количество используемой комбинации
                 print(f"x{i}{j} = {combination_qty}; piece: {self._stock_lengths[i]}")
                 if combination_qty > 0:
-                    # Количество заказанных профилей в комбинации
+                    # Количество заказанных отрезков в комбинации
                     pieces_count = self._patterns[i][j].pieces_count
                     combination = f"[{self._demand_length} x {pieces_count}]"
                     cur_waste = self._patterns[i][j].waste
@@ -265,7 +271,7 @@ class Solver:
         min_waste = self._clean_float(min_waste) # Преобразуем в читаемый формат
         output += f"Общие отходы: {min_waste} м "
         if min_waste > 0:
-            total_used_length = sum(self._stock_lengths[i] * lp.value(used_profiles[i]) 
+            total_used_length = sum(self._stock_lengths[i] * lp.value(used_items[i]) 
                                     for i in range(len(self._stock_lengths)))
             waste_part = min_waste / total_used_length * 100
             output += f"({waste_part:.2f}% от использованной длины)"
