@@ -1,0 +1,11 @@
+name: stock-cutter
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - pulp
+    - Flask
+    - gunicorn
+    - numpy
