@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from parser import Parser
 from algorithm import Solver
 
 app = Flask(__name__)
@@ -10,24 +11,16 @@ def index():
 @app.route("/process", methods=['POST'])
 def process():
     user_input = request.form
-    print(f"input: {user_input}")
+    parser = Parser(user_input)
 
-    error_message = _validate_input(user_input)
-    if error_message:
-        return jsonify({'result': error_message})
-
-    solver = Solver(user_input)
+    try:
+        clean_input = parser.parse()
+        solver = Solver(clean_input)
+        result = solver.solve()
+        return jsonify({'result': result})
     
-    result = solver.solve()
-    print(f"result: {result}")
-    
-    return jsonify({'result': result})
-
-def _validate_input(user_input):
-    for key, value in user_input.items():
-        if len(value) == 0:
-            return "Заполните все поля!"
-    return None
+    except ValueError as e:
+        return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
     app.run()
