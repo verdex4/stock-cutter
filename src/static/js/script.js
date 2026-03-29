@@ -19,14 +19,13 @@ document.getElementById('algorithm-form').addEventListener('submit', function(e)
 
 // Добавление строки в таблицу склада
 document.querySelector('.add-stock').addEventListener('click', function() {
+    console.log("Adding stock row...");
     const table = document.querySelector('.stock tbody');
-    const rows = table.querySelectorAll('tr');
-    const newRowNum = rows.length + 1;
     
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
-        <td><input type="number" placeholder="Введите длину" step="any" name="stock_len${newRowNum}"></td>
-        <td><input type="number" placeholder="Введите количество" name="stock_qty${newRowNum}"></td>
+        <td><input type="number" placeholder="Введите длину" step="any" name="stock_lengths[]"></td>
+        <td><input type="number" placeholder="Введите количество" name="stock_quantities[]"></td>
         <td><button class="delete-stock-row" type="button">✕</button></td>
     `;
     table.appendChild(newRow);
@@ -44,7 +43,6 @@ function deleteStockRow(e) {
     // Оставляем последнюю строку
     if (rows.length > 1) {
         row.remove();
-        renameStockInputs();
     }
 }
 
@@ -59,38 +57,21 @@ document.querySelector('.remove-stock').addEventListener('click', function() {
     }
     
     // Очищаем значения в первой строке
-    const firstRow = table.querySelector('tr');
-    firstRow.querySelector('input[name^="stock_len"]').value = '';
-    firstRow.querySelector('input[name^="stock_qty"]').value = '';
-    
-    renameStockInputs();
+    const firstRow = table.querySelector('tbody tr');
+    if (firstRow) {
+        const inputs = firstRow.querySelectorAll('input');
+        inputs.forEach(input => input.value = '');
+    }
 });
-
-// Переименование inputs в таблице склада
-function renameStockInputs() {
-    const table = document.querySelector('.stock tbody');
-    const rows = table.querySelectorAll('tr');
-    
-    rows.forEach((row, index) => {
-        const rowNum = index + 1;
-        const lenInput = row.querySelector('input[name^="stock_len"]');
-        const qtyInput = row.querySelector('input[name^="stock_qty"]');
-        
-        if (lenInput) lenInput.name = `stock_len${rowNum}`;
-        if (qtyInput) qtyInput.name = `stock_qty${rowNum}`;
-    });
-}
 
 // Добавление строки в таблицу заказа
 document.querySelector('.add-demand').addEventListener('click', function() {
     const table = document.querySelector('.demand tbody');
-    const rows = table.querySelectorAll('tr');
-    const newRowNum = rows.length + 1;
     
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
-        <td><input type="number" placeholder="Введите длину" step="any" name="demand_len${newRowNum}"></td>
-        <td><input type="number" placeholder="Введите количество" name="demand_qty${newRowNum}"></td>
+        <td><input type="number" placeholder="Введите длину" step="any" name="demand_lengths[]"></td>
+        <td><input type="number" placeholder="Введите количество" name="demand_quantities[]"></td>
         <td><button class="delete-demand-row" type="button">✕</button></td>
     `;
     table.appendChild(newRow);
@@ -105,10 +86,9 @@ function deleteDemandRow(e) {
     const table = document.querySelector('.demand tbody');
     const rows = table.querySelectorAll('tr');
     
-    // Не удаляем, если это последняя строка
+    // Оставляем последнюю строку
     if (rows.length > 1) {
         row.remove();
-        renameDemandInputs();
     }
 }
 
@@ -123,27 +103,12 @@ document.querySelector('.remove-demand').addEventListener('click', function() {
     }
     
     // Очищаем значения в первой строке
-    const firstRow = table.querySelector('tr');
-    firstRow.querySelector('input[name^="demand_len"]').value = '';
-    firstRow.querySelector('input[name^="demand_qty"]').value = '';
-    
-    renameDemandInputs();
+    const firstRow = table.querySelector('tbody tr');
+    if (firstRow) {
+        const inputs = firstRow.querySelectorAll('input');
+        inputs.forEach(input => input.value = '');
+    }
 });
-
-// Переименование inputs в таблице заказа
-function renameDemandInputs() {
-    const table = document.querySelector('.demand tbody');
-    const rows = table.querySelectorAll('tr');
-    
-    rows.forEach((row, index) => {
-        const rowNum = index + 1;
-        const lenInput = row.querySelector('input[name^="demand_len"]');
-        const qtyInput = row.querySelector('input[name^="demand_qty"]');
-        
-        if (lenInput) lenInput.name = `demand_len${rowNum}`;
-        if (qtyInput) qtyInput.name = `demand_qty${rowNum}`;
-    });
-}
 
 // Инициализация обработчиков для существующих кнопок удаления
 document.querySelectorAll('.delete-stock-row').forEach(button => {
