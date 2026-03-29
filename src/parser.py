@@ -10,15 +10,36 @@ class Parser:
         Парсит входные данные, проверяя их корректность. 
         Возвращает 2 словаря с длинами и количествами (склад и заказ).
         """
-        for v in self.data.values():
-            self._check_value(v)
-
-        stock = self._make_dict("stock")
-        demand = self._make_dict("demand")
+        try:
+            stock = self._make_dict("stock")
+            demand = self._make_dict("demand")
+        except ValueError:
+            raise
 
         return stock, demand
+    
+    def _make_dict(self, prefix: str) -> Dict[float, int]:
+        lengths = self.data.getlist(f"{prefix}_lengths[]")
+        quantities = self.data.getlist(f"{prefix}_quantities[]")
+        result = {}
 
-    def _check_value(self, value):
+        try:
+            for str_l, str_q in zip(lengths, quantities):
+                # проверяем корректность
+                self._check_value(str_l)
+                self._check_value(str_q)
+                l, q = float(str_l), int(str_q)
+                if l and q: # игнорируем нули
+                    result[float(str_l)] = int(str_q)
+            # проверяем, остались ли ненулевые значения
+            self._check_dict(result, prefix)
+
+        except ValueError:
+            raise
+
+        return result
+
+    def _check_value(self, value: str):
         """Проверяет корректность значения поля."""
         # проверяем заполнение поля
         if not value:
@@ -28,8 +49,9 @@ class Parser:
         if float(value) < 0:
             raise ValueError("Введенные числа не должны быть отрицательными!")
 
-    def _make_dict(self, prefix) -> Dict[float, int]:
-        lengths = self.data.getlist(f"{prefix}_lengths[]")
-        quantities = self.data.getlist(f"{prefix}_quantities[]")
-
-        return {float(l): int(q) for l, q in zip(lengths, quantities) if float(l) and int(q)}
+    def _check_dict(self, map: Dict[float, int], prefix: str):
+        """Проверяет словарь на заполненность."""
+        if not map and prefix == "stock":
+            raise ValueError("На складе пусто!")
+        if not map and prefix == "demand":
+            raise ValueError("Заказ пуст!")
