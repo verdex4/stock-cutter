@@ -174,12 +174,13 @@ class Solver:
             problem += total == required
 
         # РЕШЕНИЕ
-        status = problem.solve()
+        solver = lp.GLPK_CMD(msg=False) # отключаем логи
+        status = problem.solve(solver)
 
         # ПОЛУЧЕНИЕ РЕЗУЛЬТАТОВ
         min_waste = lp.value(problem.objective)
         if status == lp.LpStatusOptimal:
-            logger.info(f"Minimal waste is found: {min_waste}")
+            logger.info(f"Minimal waste is found: {self._clean_float(min_waste)}")
             for i in range(len(x)):
                 for j in range(len(x[i])):
                     p = self._patterns[i][j]
@@ -290,11 +291,13 @@ class Solver:
         problem += avg_distance
 
         # РЕШЕНИЕ
-        status = problem.solve()
+        solver = lp.GLPK_CMD(msg=False) # отключаем логи
+        status = problem.solve(solver)
 
         # ПОЛУЧЕНИЕ РЕЗУЛЬТАТА
         if status == lp.LpStatusOptimal:
-            logger.info(f"Uniform solution with waste = {min_waste} found! Mean distance = {lp.value(problem.objective)}")
+            result = lp.value(problem.objective)
+            logger.info(f"Uniform solution found. Mean distance = {self._clean_float(result)}")
             for i in range(len(x)):
                 for j in range(len(x[i])):
                     p = self._patterns[i][j]
