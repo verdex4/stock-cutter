@@ -46,7 +46,7 @@ class Solver:
             item_patterns = [] # паттерны заготовки длины stock_len
             quantity_ranges = [] # список диапазонов с возможными количествами отрезков при распиле
             for demand_len in self.demand:
-                quantity_ranges.append(range(int(stock_len//demand_len) + 1))
+                quantity_ranges.append(range(int(round(stock_len / demand_len)) + 1))
 
             # генерируем комбинации
             for piece_quantities, waste in self._product_iterative(quantity_ranges, stock_len):
