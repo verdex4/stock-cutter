@@ -30,6 +30,10 @@ def process():
     except (ValueError, RuntimeError) as e:
         logger.error(e)
         return jsonify({'result': str(e)}), 400 # ожидаем поле result
+    
+    except Exception as e:
+        logger.error(e)
+        return jsonify({'result': 'Произошла ошибка на сервере'}), 500
 
 if __name__ == '__main__':
     app.run()
