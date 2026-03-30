@@ -2,6 +2,11 @@
 document.getElementById('algorithm-form').addEventListener('submit', function(e) {
     e.preventDefault();
     console.log("Form submitted!");
+
+    const output = document.getElementById('result');
+    const submitButton = this.querySelector('button[type="submit"]');
+    output.innerHTML = "Идут расчеты... (для отмены перезагрузите страницу)";
+    if (submitButton) submitButton.disabled = true;
     
     const formData = new FormData(this);
     fetch('/process', {
@@ -10,10 +15,13 @@ document.getElementById('algorithm-form').addEventListener('submit', function(e)
     })
     .then(response => response.json())
     .then(data => {
-        document.getElementById('result').innerHTML = data.result;
+        output.innerHTML = data.result;
     })
     .catch(error => {
         console.error('Error:', error);
+    })
+    .finally(() => {
+        if (submitButton) submitButton.disabled = false;
     });
 });
 
