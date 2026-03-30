@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
-from parser import Parser
-from algorithm import Solver
+from src.parser import Parser
+from src.algorithm import Solver
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(filename)s: %(lineno)d | %(levelname)s | %(message)s')
