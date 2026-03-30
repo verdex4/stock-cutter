@@ -13,6 +13,7 @@ class Parser:
         try:
             stock = self._make_dict("stock")
             demand = self._make_dict("demand")
+            self._check_limits(demand, max(stock.keys()))
         except ValueError:
             raise
 
@@ -32,7 +33,7 @@ class Parser:
                 if l and q: # игнорируем нули
                     result[float(str_l)] = int(str_q)
             # проверяем, остались ли ненулевые значения
-            self._check_dict(result, prefix)
+            self._check_empty_dict(result, prefix)
 
         except ValueError:
             raise
@@ -49,9 +50,16 @@ class Parser:
         if float(value) < 0:
             raise ValueError("Введенные числа не должны быть отрицательными!")
 
-    def _check_dict(self, map: Dict[float, int], prefix: str):
+    def _check_empty_dict(self, map: Dict[float, int], prefix: str):
         """Проверяет словарь на заполненность."""
         if not map and prefix == "stock":
             raise ValueError("На складе пусто!")
         if not map and prefix == "demand":
             raise ValueError("Заказ пуст!")
+    
+    def _check_limits(self, map: Dict[float, int], max_value: float):
+        """Проверяет на наличие ключей словаря, которые больше допустимого значения."""
+        for l in map.keys():
+            if l > max_value:
+                raise ValueError(f"""Заказанный отрезок длины {l} не может быть получен, 
+                                 т.к. его длина больше максимальной длины на складе ({max_value})!""")
