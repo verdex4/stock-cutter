@@ -174,8 +174,7 @@ class Solver:
             problem += total == required
 
         # РЕШЕНИЕ
-        solver = lp.GLPK_CMD(msg=False) # отключаем логи
-        status = problem.solve(solver)
+        status = problem.solve()
 
         # ПОЛУЧЕНИЕ РЕЗУЛЬТАТОВ
         min_waste = lp.value(problem.objective)
@@ -291,8 +290,7 @@ class Solver:
         problem += avg_distance
 
         # РЕШЕНИЕ
-        solver = lp.GLPK_CMD(msg=False) # отключаем логи
-        status = problem.solve(solver)
+        status = problem.solve()
 
         # ПОЛУЧЕНИЕ РЕЗУЛЬТАТА
         if status == lp.LpStatusOptimal:
